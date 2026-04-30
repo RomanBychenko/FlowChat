@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FlowChat</title>
+</head>
+<body>
+
+  <h1>FlowChat</h1>
+
+  <input
+    type="text"
+    id="messageInput"
+    placeholder="Enter message"
+  >
+
+  <button id="sendButton">
+    Send
+  </button>
+
+  <div id="messages"></div>
+
+  <!-- підключення до сервера -->
+  <script>
+    const socket = new WebSocket('ws://localhost:8080');
+
+    const input = document.getElementById('messageInput');
+    const button = document.getElementById('sendButton');
+    const messages = document.getElementById('messages');
+
+    socket.addEventListener('open', () => {
+      console.log('Connected to server');
+    });
+
+    socket.addEventListener('message', (event) => {
+      const messageElement = document.createElement('p');
+
+      messageElement.textContent = event.data;
+
+      messages.appendChild(messageElement);
+    });
+
+    button.addEventListener('click', () => {
+      const text = input.value;
+
+      socket.send(text);
+
+      input.value = '';
+    });
+  </script>
+
+</body>
+</html>
