@@ -22,32 +22,50 @@
 
   <!-- підключення до сервера -->
   <script>
-    const socket = new WebSocket('ws://localhost:8080');
+  const socket = new WebSocket('ws://localhost:8080');
 
-    const input = document.getElementById('messageInput');
-    const button = document.getElementById('sendButton');
-    const messages = document.getElementById('messages');
+  const username = prompt('Enter your username');
 
-    socket.addEventListener('open', () => {
-      console.log('Connected to server');
-    });
+  const input = document.getElementById('messageInput');
+  const button = document.getElementById('sendButton');
+  const messages = document.getElementById('messages');
 
-    socket.addEventListener('message', (event) => {
-      const messageElement = document.createElement('p');
+  socket.addEventListener('open', () => {
+    socket.send(JSON.stringify({
+      type: 'join',
+      username
+    }));
+  });
 
-      messageElement.textContent = event.data;
+  socket.addEventListener('message', (event) => {
+    const data = JSON.parse(event.data);
 
-      messages.appendChild(messageElement);
-    });
+    const messageElement = document.createElement('p');
 
-    button.addEventListener('click', () => {
-      const text = input.value;
+    if (data.type === 'system') {
+      messageElement.textContent = `[SYSTEM]: ${data.text}`;
+    }
 
-      socket.send(text);
+    if (data.type === 'message') {
+      messageElement.textContent =
+        `${data.username}: ${data.text}`;
+    }
 
-      input.value = '';
-    });
-  </script>
+    messages.appendChild(messageElement);
+  });
+
+  button.addEventListener('click', () => {
+    const text = input.value;
+
+    socket.send(JSON.stringify({
+      type: 'message',
+      username,
+      text
+    }));
+
+    input.value = '';
+  });
+</script>
 
 </body>
 </html>
