@@ -1,4 +1,9 @@
 import { WebSocketServer } from 'ws';
+import {
+  addUser,
+  removeUser,
+  getUsers
+} from './rooms/users.js';
 
 const PORT = 8080;
 
@@ -13,17 +18,45 @@ console.log(`WebSocket server running on port ${PORT}`);
 wss.on('connection', (socket) => {
   console.log('New client connected');
 
-  socket.send('Connected to FlowChat server');
+    // коли приходить повідомлення
+  socket.on('message', (rawMessage) => {
+    const data = JSON.parse(rawMessage);
 
-  // коли приходить повідомлення
-  socket.on('message', (message) => {
-    console.log('Received:', message.toString());
+    if (data.type === 'join') {
+      addUser(data.username, socket);
 
-    // відправка повідомлення назад клієнту
-    socket.send(`Server received: ${message}`);
+      console.log(`${data.username} joined chat`);
+
+      broadcastMessage({
+        type: 'system',
+        text: `${data.username} joined the chat`
+      });
+
+      return;
+    }
+
+    if (data.type === 'message') {
+      console.log(`${data.username}: ${data.text}`);
+
+      broadcastMessage({
+        type: 'message',
+        username: data.username,
+        text: data.text
+      });
+    }
   });
 
   socket.on('close', () => {
+    removeUser(socket);
+
     console.log('Client disconnected');
   });
 });
+
+function broadcastMessage(message) {
+  const users = getUsers();
+
+  for (const user of users) {
+    user.socket.send(JSON.stringify(message));
+  }
+}
