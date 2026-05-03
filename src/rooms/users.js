@@ -20,3 +20,9 @@ export function removeUser(socket) {
 export function getUsers() {
   return users;
 }
+
+export function findUserBySocket(socket) {
+  return users.find((user) => {
+    return user.socket === socket;
+  });
+}

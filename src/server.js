@@ -2,7 +2,8 @@ import { WebSocketServer } from 'ws';
 import {
   addUser,
   removeUser,
-  getUsers
+  getUsers,
+  findUserBySocket
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
 
@@ -50,6 +51,15 @@ wss.on('connection', (socket) => {
   });
 
   socket.on('close', () => {
+    const user = findUserBySocket(socket);
+
+    if (user) {
+      broadcastMessage({
+        type: 'system',
+        text: `${user.username} left the chat`
+      });
+    }
+
     removeUser(socket);
 
     console.log('Client disconnected');
