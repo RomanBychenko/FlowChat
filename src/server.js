@@ -4,8 +4,10 @@ import {
   removeUser,
   getUsers
 } from './rooms/users.js';
+import { messageIdGenerator } from './utils/messageId.js';
 
 const PORT = 8080;
+const messageIds = messageIdGenerator();
 
 // створення realtime серверу
 const wss = new WebSocketServer({
@@ -39,7 +41,8 @@ wss.on('connection', (socket) => {
       console.log(`${data.username}: ${data.text}`);
 
       broadcastMessage({
-        type: 'message',
+        id: messageIds.next().value,
+         type: 'message',
         username: data.username,
         text: data.text
       });
