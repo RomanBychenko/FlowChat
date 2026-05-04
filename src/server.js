@@ -6,6 +6,8 @@ import {
   findUserBySocket
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
+import './events/chatListeners.js';
+import chatEventBus from './events/chatEventBus.js';
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -28,7 +30,7 @@ wss.on('connection', (socket) => {
     if (data.type === 'join') {
       addUser(data.username, socket);
 
-      console.log(`${data.username} joined chat`);
+      chatEventBus.emit('user:join', data.username);
 
       broadcastMessage({
         type: 'system',
@@ -39,7 +41,10 @@ wss.on('connection', (socket) => {
     }
 
     if (data.type === 'message') {
-      console.log(`${data.username}: ${data.text}`);
+      chatEventBus.emit('message:new', {
+        username: data.username,
+        text: data.text
+      });
 
       broadcastMessage({
         id: messageIds.next().value,
@@ -62,7 +67,9 @@ wss.on('connection', (socket) => {
 
     removeUser(socket);
 
-    console.log('Client disconnected');
+    if (user) {
+      chatEventBus.emit('user:left', user.username);
+    }
   });
 });
 
