@@ -1,17 +1,29 @@
 import chatEventBus from './chatEventBus.js';
+import { writeLog } from '../logger/logger.js';
 
 chatEventBus.on('user:join', (username) => {
-  console.log(`[EVENT] ${username} joined`);
+    const message = `[EVENT] ${username} joined`;
+
+    console.log(message);
+
+    writeLog(message);
 });
 
 chatEventBus.on('message:new', (message) => {
-  console.log(
-    `[EVENT] new message from ${message.username}`
-  );
+    const logMessage =
+    `[EVENT] new message from ${message.username}`;
+
+    console.log(logMessage);
+
+    writeLog(logMessage);
 });
 
 chatEventBus.on('user:left', (username) => {
-  console.log(`[EVENT] ${username} left`);
+    const message = `[EVENT] ${username} left`;
+
+    console.log(message);
+
+    writeLog(message);
 });
 
 // on() - підписується на подію;  emit() - буде викликати listener'и
