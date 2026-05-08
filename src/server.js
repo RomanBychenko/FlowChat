@@ -3,11 +3,13 @@ import {
   addUser,
   removeUser,
   getUsers,
-  findUserBySocket
+  findUserBySocket,
+  removeUserFromRoom
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
 import './events/chatListeners.js';
 import chatEventBus from './events/chatEventBus.js';
+
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -23,7 +25,7 @@ console.log(`WebSocket server running on port ${PORT}`);
 wss.on('connection', (socket) => {
   console.log('New client connected');
 
-    // коли приходить повідомлення
+  // коли приходить повідомлення
   socket.on('message', (rawMessage) => {
     const data = JSON.parse(rawMessage);
 
@@ -48,7 +50,7 @@ wss.on('connection', (socket) => {
 
       broadcastMessage({
         id: messageIds.next().value,
-         type: 'message',
+        type: 'message',
         username: data.username,
         text: data.text
       });
@@ -56,21 +58,26 @@ wss.on('connection', (socket) => {
   });
 
   socket.on('close', () => {
-    const user = findUserBySocket(socket);
-
-    if (user) {
-      broadcastMessage({
-        type: 'system',
-        text: `${user.username} left the chat`
-      });
-    }
-
-    removeUser(socket);
-
-    if (user) {
-      chatEventBus.emit('user:left', user.username);
-    }
-  });
+      const user = findUserBySocket(socket);
+  
+      if (user) {
+        removeUserFromRoom(
+          user.room,
+          socket
+        );
+      
+        broadcastMessage({
+          type: 'system',
+          text: `${user.username} left the chat`
+        });
+      }
+  
+      removeUser(socket);
+  
+      if (user) {
+        chatEventBus.emit('user:left', user.username);
+      }
+    });
 });
 
 function broadcastMessage(message) {

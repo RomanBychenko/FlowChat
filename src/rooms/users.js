@@ -26,3 +26,13 @@ export function findUserBySocket(socket) {
     return user.socket === socket;
   });
 }
+
+export function removeUserFromRoom(socket) {
+  const index = users.findIndex((user) => {
+    return user.socket === socket;
+  });
+
+  if (index !== -1) {
+    users.splice(index, 1);
+  }
+}

@@ -20,52 +20,51 @@
 
   <div id="messages"></div>
 
-  <!-- підключення до сервера -->
   <script>
-  const socket = new WebSocket('ws://localhost:8080');
+    const socket = new WebSocket('ws://localhost:8080');
 
-  const username = prompt('Enter your username');
+    const username = prompt('Enter your username');
 
-  const input = document.getElementById('messageInput');
-  const button = document.getElementById('sendButton');
-  const messages = document.getElementById('messages');
+    const input = document.getElementById('messageInput');
+    const button = document.getElementById('sendButton');
+    const messages = document.getElementById('messages');
 
-  socket.addEventListener('open', () => {
-    socket.send(JSON.stringify({
-      type: 'join',
-      username
-    }));
-  });
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify({
+        type: 'join',
+        username
+      }));
+    });
 
-  socket.addEventListener('message', (event) => {
-    const data = JSON.parse(event.data);
+    socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
 
-    const messageElement = document.createElement('p');
+      const messageElement = document.createElement('p');
 
-    if (data.type === 'system') {
-      messageElement.textContent = `[SYSTEM]: ${data.text}`;
-    }
+      if (data.type === 'system') {
+        messageElement.textContent = `[SYSTEM]: ${data.text}`;
+      }
 
-    if (data.type === 'message') {
-      messageElement.textContent =
-        `#${data.id} ${data.username}: ${data.text}`;
-    }
+      if (data.type === 'message') {
+        messageElement.textContent =
+          `#${data.id} ${data.username}: ${data.text}`;
+      }
 
-    messages.appendChild(messageElement);
-  });
+      messages.appendChild(messageElement);
+    });
 
-  button.addEventListener('click', () => {
-    const text = input.value;
+    button.addEventListener('click', () => {
+      const text = input.value;
 
-    socket.send(JSON.stringify({
-      type: 'message',
-      username,
-      text
-    }));
+      socket.send(JSON.stringify({
+        type: 'message',
+        username,
+        text
+      }));
 
-    input.value = '';
-  });
-</script>
+      input.value = '';
+    });
+  </script>
 
 </body>
 </html>
