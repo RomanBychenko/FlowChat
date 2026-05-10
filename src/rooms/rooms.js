@@ -1,33 +1,31 @@
-const rooms = new Map();
+const rooms = {};
 
 export function createRoom(roomName) {
-  if (!rooms.has(roomName)) {
-    rooms.set(roomName, []);
+  if (!rooms[roomName]) {
+    rooms[roomName] = [];
   }
 }
 
 export function addUserToRoom(roomName, user) {
-  const room = rooms.get(roomName);
+  createRoom(roomName);
 
-  if (room) {
-    room.push(user);
-  }
+  rooms[roomName].push(user);
 }
 
 export function removeUserFromRoom(roomName, socket) {
-  const room = rooms.get(roomName);
-
-  if (!room) {
+  if (!rooms[roomName]) {
     return;
   }
 
-  const filteredUsers = room.filter((user) => {
+  rooms[roomName] = rooms[roomName].filter((user) => {
     return user.socket !== socket;
   });
-
-  rooms.set(roomName, filteredUsers);
 }
 
 export function getRoomUsers(roomName) {
-  return rooms.get(roomName) || [];
+  return rooms[roomName] || [];
+}
+
+export function getRooms() {
+  return rooms;
 }

@@ -3,12 +3,16 @@ import {
   addUser,
   removeUser,
   getUsers,
-  findUserBySocket,
-  removeUserFromRoom
+  findUserBySocket
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
 import './events/chatListeners.js';
 import chatEventBus from './events/chatEventBus.js';
+import {
+  addUserToRoom,
+  removeUserFromRoom,
+  getRoomUsers
+} from './rooms/rooms.js';
 
 
 const PORT = 8080;
@@ -30,13 +34,22 @@ wss.on('connection', (socket) => {
     const data = JSON.parse(rawMessage);
 
     if (data.type === 'join') {
-      addUser(data.username, socket);
+      addUser(
+      data.username,
+      socket,
+      data.room
+    );
+
+    addUserToRoom(data.room, {
+      username: data.username,
+      socket
+    });
 
       chatEventBus.emit('user:join', data.username);
 
-      broadcastMessage({
+      broadcastMessage(data.room, {
         type: 'system',
-        text: `${data.username} joined the chat`
+        text: `${data.username} joined the room`
       });
 
       return;
@@ -48,7 +61,7 @@ wss.on('connection', (socket) => {
         text: data.text
       });
 
-      broadcastMessage({
+      broadcastMessage(data.room, {
         id: messageIds.next().value,
         type: 'message',
         username: data.username,
@@ -66,13 +79,17 @@ wss.on('connection', (socket) => {
           socket
         );
       
-        broadcastMessage({
+        broadcastMessage(user.room, {
           type: 'system',
-          text: `${user.username} left the chat`
+          text: `${user.username} left the room`
         });
       }
   
       removeUser(socket);
+      removeUserFromRoom(
+        user.room,
+        socket
+      );
   
       if (user) {
         chatEventBus.emit('user:left', user.username);
@@ -80,10 +97,12 @@ wss.on('connection', (socket) => {
     });
 });
 
-function broadcastMessage(message) {
-  const users = getUsers();
+function broadcastMessage(roomName, message) {
+  const users = getRoomUsers(roomName);
 
   for (const user of users) {
-    user.socket.send(JSON.stringify(message));
+    user.socket.send(
+      JSON.stringify(message)
+    );
   }
 }

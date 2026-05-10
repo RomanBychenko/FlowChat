@@ -1,9 +1,10 @@
 const users = [];
 
-export function addUser(username, socket) {
+export function addUser(username, socket, room) {
   users.push({
     username,
-    socket
+    socket,
+    room
   });
 }
 
