@@ -11,9 +11,9 @@ import chatEventBus from './events/chatEventBus.js';
 import {
   addUserToRoom,
   removeUserFromRoom,
-  getRoomUsers
+  getRoomUsers,
+  getRoomStats
 } from './rooms/rooms.js';
-
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -52,6 +52,8 @@ wss.on('connection', (socket) => {
         text: `${data.username} joined the room`
       });
 
+      updateRoomData(data.room);
+
       return;
     }
 
@@ -83,6 +85,8 @@ wss.on('connection', (socket) => {
           type: 'system',
           text: `${user.username} left the room`
         });
+
+        updateRoomData(user.room);
       }
   
       removeUser(socket);
@@ -105,4 +109,19 @@ function broadcastMessage(roomName, message) {
       JSON.stringify(message)
     );
   }
+}
+
+function updateRoomData(roomName) {
+  const users = getRoomUsers(roomName);
+
+  const usernames = users.map((user) => {
+    return user.username;
+  });
+
+  broadcastMessage(roomName, {
+    type: 'roomData',
+    users: usernames,
+    online: users.length,
+    stats: getRoomStats()
+  });
 }

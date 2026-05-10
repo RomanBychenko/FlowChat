@@ -20,6 +20,14 @@
 
   <div id="messages"></div>
 
+  <hr>
+
+  <h3>Online users</h3>
+  <div id="onlineUsers"></div>
+
+  <h3>Room stats</h3>
+  <div id="roomStats"></div>
+
   <script>
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -29,6 +37,13 @@
     const input = document.getElementById('messageInput');
     const button = document.getElementById('sendButton');
     const messages = document.getElementById('messages');
+
+    const onlineUsers =
+      document.getElementById('onlineUsers');
+
+    const roomStats =
+      document.getElementById('roomStats');
+
 
     socket.addEventListener('open', () => {
       socket.send(JSON.stringify({
@@ -40,6 +55,40 @@
 
     socket.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
+
+      if (data.type === 'roomData') {
+        onlineUsers.innerHTML = '';
+        roomStats.innerHTML = '';
+
+        const usersTitle =
+          document.createElement('p');
+
+        usersTitle.textContent =
+          `Online: ${data.online}`;
+
+        onlineUsers.appendChild(usersTitle);
+
+        for (const username of data.users) {
+          const userElement =
+            document.createElement('p');
+
+          userElement.textContent = username;
+
+          onlineUsers.appendChild(userElement);
+        }
+
+        for (const stat of data.stats) {
+          const statElement =
+            document.createElement('p');
+
+          statElement.textContent =
+            `${stat.room}: ${stat.online}`;
+
+          roomStats.appendChild(statElement);
+        }
+
+        return;
+      }
 
       const messageElement = document.createElement('p');
 
