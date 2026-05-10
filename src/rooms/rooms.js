@@ -29,3 +29,16 @@ export function getRoomUsers(roomName) {
 export function getRooms() {
   return rooms;
 }
+
+export function getRoomStats() {
+  const result = [];
+
+  for (const roomName in rooms) {
+    result.push({
+      room: roomName,
+      online: rooms[roomName].length
+    });
+  }
+
+  return result;
+}
