@@ -3,7 +3,8 @@ import {
   addUser,
   removeUser,
   getUsers,
-  findUserBySocket
+  findUserBySocket,
+  updateUserActivity
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
 import './events/chatListeners.js';
@@ -14,6 +15,9 @@ import {
   getRoomUsers,
   getRoomStats
 } from './rooms/rooms.js';
+import {
+  startCleanupService
+} from './services/cleanupService.js';
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -24,6 +28,7 @@ const wss = new WebSocketServer({
 });
 
 console.log(`WebSocket server running on port ${PORT}`);
+startCleanupService();
 
 // спрацьовує коли користувач підключається
 wss.on('connection', (socket) => {
@@ -58,6 +63,7 @@ wss.on('connection', (socket) => {
     }
 
     if (data.type === 'message') {
+      updateUserActivity(socket);
       chatEventBus.emit('message:new', {
         username: data.username,
         text: data.text
