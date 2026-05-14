@@ -4,7 +4,8 @@ export function addUser(username, socket, room) {
   users.push({
     username,
     socket,
-    room
+    room,
+    lastActivity: Date.now()
   });
 }
 
@@ -35,5 +36,15 @@ export function removeUserFromRoom(socket) {
 
   if (index !== -1) {
     users.splice(index, 1);
+  }
+}
+
+export function updateUserActivity(socket) {
+  const user = users.find((user) => {
+    return user.socket === socket;
+  });
+
+  if (user) {
+    user.lastActivity = Date.now();
   }
 }
