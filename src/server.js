@@ -18,6 +18,9 @@ import {
 import {
   startCleanupService
 } from './services/cleanupService.js';
+import {
+  moderateMessage
+} from './moderation/moderationService.js';
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -35,7 +38,7 @@ wss.on('connection', (socket) => {
   console.log('New client connected');
 
   // коли приходить повідомлення
-  socket.on('message', (rawMessage) => {
+  socket.on('message', async (rawMessage) => {
     const data = JSON.parse(rawMessage);
 
     if (data.type === 'join') {
@@ -64,6 +67,25 @@ wss.on('connection', (socket) => {
 
     if (data.type === 'message') {
       updateUserActivity(socket);
+      const moderationResult =
+        await moderateMessage(data.text);
+
+      if (moderationResult.blocked) {
+        chatEventBus.emit(
+          'message:blocked',
+          {
+            username: data.username
+          }
+        );
+
+        socket.send(JSON.stringify({
+          type: 'system',
+          text: moderationResult.reason
+        }));
+
+        return;
+      }
+
       chatEventBus.emit('message:new', {
         username: data.username,
         text: data.text
