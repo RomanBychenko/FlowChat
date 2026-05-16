@@ -26,4 +26,16 @@ chatEventBus.on('user:left', (username) => {
     writeLog(message);
 });
 
+chatEventBus.on(
+  'message:blocked',
+  (data) => {
+    const message =
+      `[MODERATION] blocked message from ${data.username}`;
+
+    console.log(message);
+
+    writeLog(message);
+  }
+);
+
 // on() - підписується на подію;  emit() - буде викликати listener'и
