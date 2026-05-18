@@ -21,6 +21,11 @@ import {
 import {
   moderateMessage
 } from './moderation/moderationService.js';
+import {
+  setRoomStatsCache,
+  getRoomStatsCache,
+  clearRoomStatsCache
+} from './cache/roomStatsCache.js';
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -52,6 +57,8 @@ wss.on('connection', (socket) => {
       username: data.username,
       socket
     });
+
+    clearRoomStatsCache();
 
       chatEventBus.emit('user:join', data.username);
 
@@ -108,6 +115,8 @@ wss.on('connection', (socket) => {
           user.room,
           socket
         );
+
+        clearRoomStatsCache();
       
         broadcastMessage(user.room, {
           type: 'system',
@@ -140,6 +149,8 @@ function broadcastMessage(roomName, message) {
 }
 
 function updateRoomData(roomName) {
+  const cachedStats =
+    getRoomStatsCache('room-stats');
   const users = getRoomUsers(roomName);
 
   const usernames = users.map((user) => {
@@ -150,6 +161,13 @@ function updateRoomData(roomName) {
     type: 'roomData',
     users: usernames,
     online: users.length,
-    stats: getRoomStats()
+    stats: cachedStats || getRoomStats()
   });
+
+  if (!cachedStats) {
+    setRoomStatsCache(
+      'room-stats',
+      getRoomStats()
+    );
+  }
 }
