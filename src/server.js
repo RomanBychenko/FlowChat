@@ -1,3 +1,5 @@
+import http from 'http';
+import app from './app.js';
 import { WebSocketServer } from 'ws';
 import {
   addUser,
@@ -39,11 +41,15 @@ const PORT = 8080;
 const messageIds = messageIdGenerator();
 
 // створення realtime серверу
+const server = http.createServer(app);
+
 const wss = new WebSocketServer({
-  port: PORT
+    server
 });
 
-console.log(`WebSocket server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
 startCleanupService();
 
 // спрацьовує коли користувач підключається

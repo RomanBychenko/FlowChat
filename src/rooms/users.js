@@ -19,8 +19,15 @@ export function removeUser(socket) {
   }
 }
 
-export function getUsers() {
-  return users;
+export function getUsers(roomName = null) {
+
+    if (!roomName) {
+        return users;
+    }
+
+    return users.filter((user) => {
+        return user.room === roomName;
+    });
 }
 
 export function findUserBySocket(socket) {
