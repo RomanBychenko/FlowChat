@@ -26,6 +26,9 @@ import {
   getRoomStatsCache,
   clearRoomStatsCache
 } from './cache/roomStatsCache.js';
+import {
+  addMessageToCache
+} from './cache/messageCache.js';
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -61,6 +64,12 @@ wss.on('connection', (socket) => {
     clearRoomStatsCache();
 
       chatEventBus.emit('user:join', data.username);
+
+      addMessageToCache({
+        username: data.username,
+        text: data.text,
+        room: data.room
+      });
 
       broadcastMessage(data.room, {
         type: 'system',
