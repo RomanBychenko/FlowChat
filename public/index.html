@@ -1,6 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <style>
+
+body {
+    font-family: Arial;
+    margin: 20px;
+}
+
+#messages {
+    border: 1px solid gray;
+    height: 300px;
+    overflow-y: scroll;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#messages div {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+input {
+    padding: 8px;
+}
+
+button {
+    padding: 8px;
+    cursor: pointer;
+}
+
+</style>
   <meta charset="UTF-8">
   <title>FlowChat</title>
 </head>
@@ -90,19 +121,25 @@
         return;
       }
 
-      const messageElement = document.createElement('p');
+      addMessage(data);
+    });
 
-      if (data.type === 'system') {
-        messageElement.textContent = `[SYSTEM]: ${data.text}`;
+    function addMessage(message) {
+      const messageElement =
+        document.createElement('p');
+
+      if (message.type === 'system') {
+        messageElement.textContent =
+          `[SYSTEM]: ${message.text}`;
       }
 
-      if (data.type === 'message') {
+      if (message.type === 'message') {
         messageElement.textContent =
-          `#${data.id} ${data.username}: ${data.text}`;
+          `#${message.id} ${message.username}: ${message.text}`;
       }
 
       messages.appendChild(messageElement);
-    });
+    }
 
     button.addEventListener('click', () => {
       const text = input.value;

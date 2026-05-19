@@ -7,6 +7,7 @@ import {
   updateUserActivity
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
+import { getCurrentTime } from './utils/timeFormatter.js';
 import './events/chatListeners.js';
 import chatEventBus from './events/chatEventBus.js';
 import {
@@ -32,6 +33,7 @@ import {
 import {
   getMessageCache
 } from './cache/messageCache.js';
+
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -76,7 +78,8 @@ wss.on('connection', (socket) => {
 
       broadcastMessage(data.room, {
         type: 'system',
-        text: `${data.username} joined the room`
+        text: `${data.username} joined the room`,
+        time: getCurrentTime()
       });
 
       updateRoomData(data.room);
@@ -133,10 +136,11 @@ wss.on('connection', (socket) => {
       });
 
       broadcastMessage(data.room, {
-          id: messageIds.next().value,
-          type: 'message',
-          username: data.username,
-          text: data.text
+        id: messageIds.next().value,
+        type: 'message',
+        username: data.username,
+        text: data.text,
+        time: getCurrentTime()
       });
     }
   });
@@ -154,7 +158,8 @@ wss.on('connection', (socket) => {
       
         broadcastMessage(user.room, {
           type: 'system',
-          text: `${user.username} left the room`
+          text: `${user.username} left the room`,
+          time: getCurrentTime()
         });
 
         updateRoomData(user.room);
