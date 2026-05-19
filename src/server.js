@@ -29,6 +29,9 @@ import {
 import {
   addMessageToCache
 } from './cache/messageCache.js';
+import {
+  getMessageCache
+} from './cache/messageCache.js';
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -78,40 +81,62 @@ wss.on('connection', (socket) => {
 
       updateRoomData(data.room);
 
+      const cachedMessages =
+        getMessageCache();
+
+      for (const message of cachedMessages) {
+        if (message.room === data.room) {
+          socket.send(JSON.stringify({
+            type: 'message',
+            username: message.username,
+            text: message.text
+          }));
+        }
+      }
+
       return;
     }
 
     if (data.type === 'message') {
+
       updateUserActivity(socket);
+
       const moderationResult =
-        await moderateMessage(data.text);
+          await moderateMessage(data.text);
 
       if (moderationResult.blocked) {
-        chatEventBus.emit(
-          'message:blocked',
-          {
-            username: data.username
-          }
-        );
 
-        socket.send(JSON.stringify({
-          type: 'system',
-          text: moderationResult.reason
-        }));
+          chatEventBus.emit(
+              'message:blocked',
+              {
+                username: data.username
+              }
+          );
 
-        return;
+          socket.send(JSON.stringify({
+              type: 'system',
+              text: moderationResult.reason
+          }));
+
+          return;
       }
 
       chatEventBus.emit('message:new', {
-        username: data.username,
-        text: data.text
+          username: data.username,
+          text: data.text
+      });
+
+      addMessageToCache({
+          username: data.username,
+          text: data.text,
+          room: data.room
       });
 
       broadcastMessage(data.room, {
-        id: messageIds.next().value,
-        type: 'message',
-        username: data.username,
-        text: data.text
+          id: messageIds.next().value,
+          type: 'message',
+          username: data.username,
+          text: data.text
       });
     }
   });
