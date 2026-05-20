@@ -10,6 +10,10 @@ import {
 } from './rooms/users.js';
 import { messageIdGenerator } from './utils/messageId.js';
 import { getCurrentTime } from './utils/timeFormatter.js';
+import {
+    validateUsername,
+    validateMessage
+} from './utils/validation.js';
 import './events/chatListeners.js';
 import chatEventBus from './events/chatEventBus.js';
 import {
@@ -56,11 +60,25 @@ startCleanupService();
 wss.on('connection', (socket) => {
   console.log('New client connected');
 
+  socket.on('error', (error) => {
+    console.log('Socket error:', error.message);
+  });
+
   // коли приходить повідомлення
   socket.on('message', async (rawMessage) => {
     const data = JSON.parse(rawMessage);
 
     if (data.type === 'join') {
+      if (!validateUsername(data.username)) {
+
+        socket.send(JSON.stringify({
+          type: 'system',
+          text: 'Username must contain at least 3 characters',
+          time: getCurrentTime()
+        }));
+
+        return;
+      }
       addUser(
       data.username,
       socket,
@@ -107,6 +125,16 @@ wss.on('connection', (socket) => {
     }
 
     if (data.type === 'message') {
+      if (!validateMessage(data.text)) {
+
+        socket.send(JSON.stringify({
+          type: 'system',
+          text: 'Invalid message',
+          time: getCurrentTime()
+        }));
+
+        return;
+      }
 
       updateUserActivity(socket);
 
@@ -149,38 +177,37 @@ wss.on('connection', (socket) => {
         time: getCurrentTime()
       });
     }
-  });
+});
 
   socket.on('close', () => {
-      const user = findUserBySocket(socket);
-  
-      if (user) {
-        removeUserFromRoom(
-          user.room,
-          socket
-        );
+    const user = findUserBySocket(socket);
 
-        clearRoomStatsCache();
-      
-        broadcastMessage(user.room, {
-          type: 'system',
-          text: `${user.username} left the room`,
-          time: getCurrentTime()
-        });
+    if (!user) {
+      return;
+    }
 
-        updateRoomData(user.room);
-      }
-  
-      removeUser(socket);
-      removeUserFromRoom(
-        user.room,
-        socket
-      );
-  
-      if (user) {
-        chatEventBus.emit('user:left', user.username);
-      }
+    removeUserFromRoom(
+      user.room,
+      socket
+    );
+
+    removeUser(socket);
+
+    clearRoomStatsCache();
+
+    broadcastMessage(user.room, {
+      type: 'system',
+      text: `${user.username} left the room`,
+      time: getCurrentTime()
     });
+
+    updateRoomData(user.room);
+
+    chatEventBus.emit(
+      'user:left',
+      user.username
+    );
+  });  
 });
 
 function broadcastMessage(roomName, message) {

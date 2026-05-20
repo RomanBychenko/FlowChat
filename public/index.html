@@ -61,6 +61,14 @@ button {
 
   <script>
     const socket = new WebSocket('ws://localhost:8080');
+    socket.addEventListener('close', () => {
+
+      addMessage({
+        type: 'system',
+        text: 'Disconnected from server',
+        time: 'SYSTEM'
+      });
+    });
 
     const username = prompt('Enter your username');
     const room = prompt('Enter room name');
