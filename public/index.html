@@ -61,11 +61,24 @@ button {
 
   <script>
     const socket = new WebSocket('ws://localhost:8080');
+
+    const onlineCount = document.getElementById('onlineCount');
+    const usersList = document.getElementById('usersList');
+    const statsBox = document.getElementById('statsBox'); 
+
     socket.addEventListener('close', () => {
 
       addMessage({
         type: 'system',
         text: 'Disconnected from server',
+        time: 'SYSTEM'
+      });
+    });
+    socket.addEventListener('open', () => {
+
+      addMessage({
+        type: 'system',
+        text: 'Connected to server',
         time: 'SYSTEM'
       });
     });
@@ -94,6 +107,23 @@ button {
 
     socket.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
+
+      if (data.type === 'roomData') {
+        onlineCount.textContent = data.online;
+
+        usersList.innerHTML = '';
+
+        data.users.forEach(user => {
+          const li = document.createElement('li');
+          li.textContent = user;
+          usersList.appendChild(li);
+        });
+
+        statsBox.textContent =
+          `Users joined: ${data.stats.joins}
+      Messages: ${data.stats.messages}
+      Blocked: ${data.stats.blocked}`;
+      }
 
       if (data.type === 'roomData') {
         onlineUsers.innerHTML = '';
@@ -165,3 +195,13 @@ button {
 
 </body>
 </html>
+
+<div class="sidebar">
+    <h3>Online users</h3>
+    <p id="onlineCount">0</p>
+
+    <ul id="usersList"></ul>
+
+    <h3>Stats</h3>
+    <pre id="statsBox"></pre>
+</div>
