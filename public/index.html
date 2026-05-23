@@ -1,6 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <style>
+
+body {
+    font-family: Arial;
+    margin: 20px;
+}
+
+#messages {
+    border: 1px solid gray;
+    height: 300px;
+    overflow-y: scroll;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#messages div {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+input {
+    padding: 8px;
+}
+
+button {
+    padding: 8px;
+    cursor: pointer;
+}
+
+</style>
   <meta charset="UTF-8">
   <title>FlowChat</title>
 </head>
@@ -20,52 +51,157 @@
 
   <div id="messages"></div>
 
-  <!-- підключення до сервера -->
+  <hr>
+
+  <h3>Online users</h3>
+  <div id="onlineUsers"></div>
+
+  <h3>Room stats</h3>
+  <div id="roomStats"></div>
+
   <script>
-  const socket = new WebSocket('ws://localhost:8080');
+    const socket = new WebSocket('ws://localhost:8080');
 
-  const username = prompt('Enter your username');
+    const onlineCount = document.getElementById('onlineCount');
+    const usersList = document.getElementById('usersList');
+    const statsBox = document.getElementById('statsBox'); 
 
-  const input = document.getElementById('messageInput');
-  const button = document.getElementById('sendButton');
-  const messages = document.getElementById('messages');
+    socket.addEventListener('close', () => {
 
-  socket.addEventListener('open', () => {
-    socket.send(JSON.stringify({
-      type: 'join',
-      username
-    }));
-  });
+      addMessage({
+        type: 'system',
+        text: 'Disconnected from server',
+        time: 'SYSTEM'
+      });
+    });
+    socket.addEventListener('open', () => {
 
-  socket.addEventListener('message', (event) => {
-    const data = JSON.parse(event.data);
+      addMessage({
+        type: 'system',
+        text: 'Connected to server',
+        time: 'SYSTEM'
+      });
+    });
 
-    const messageElement = document.createElement('p');
+    const username = prompt('Enter your username');
+    const room = prompt('Enter room name');
 
-    if (data.type === 'system') {
-      messageElement.textContent = `[SYSTEM]: ${data.text}`;
+    const input = document.getElementById('messageInput');
+    const button = document.getElementById('sendButton');
+    const messages = document.getElementById('messages');
+
+    const onlineUsers =
+      document.getElementById('onlineUsers');
+
+    const roomStats =
+      document.getElementById('roomStats');
+
+
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify({
+        type: 'join',
+        username,
+        room
+      }));
+    });
+
+    socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'roomData') {
+        onlineCount.textContent = data.online;
+
+        usersList.innerHTML = '';
+
+        data.users.forEach(user => {
+          const li = document.createElement('li');
+          li.textContent = user;
+          usersList.appendChild(li);
+        });
+
+        statsBox.textContent =
+          `Users joined: ${data.stats.joins}
+      Messages: ${data.stats.messages}
+      Blocked: ${data.stats.blocked}`;
+      }
+
+      if (data.type === 'roomData') {
+        onlineUsers.innerHTML = '';
+        roomStats.innerHTML = '';
+
+        const usersTitle =
+          document.createElement('p');
+
+        usersTitle.textContent =
+          `Online: ${data.online}`;
+
+        onlineUsers.appendChild(usersTitle);
+
+        for (const username of data.users) {
+          const userElement =
+            document.createElement('p');
+
+          userElement.textContent = username;
+
+          onlineUsers.appendChild(userElement);
+        }
+
+        for (const stat of data.stats) {
+          const statElement =
+            document.createElement('p');
+
+          statElement.textContent =
+            `${stat.room}: ${stat.online}`;
+
+          roomStats.appendChild(statElement);
+        }
+
+        return;
+      }
+
+      addMessage(data);
+    });
+
+    function addMessage(message) {
+      const messageElement =
+        document.createElement('p');
+
+      if (message.type === 'system') {
+        messageElement.textContent =
+          `[SYSTEM]: ${message.text}`;
+      }
+
+      if (message.type === 'message') {
+        messageElement.textContent =
+          `#${message.id} ${message.username}: ${message.text}`;
+      }
+
+      messages.appendChild(messageElement);
     }
 
-    if (data.type === 'message') {
-      messageElement.textContent =
-        `#${data.id} ${data.username}: ${data.text}`;
-    }
+    button.addEventListener('click', () => {
+      const text = input.value;
 
-    messages.appendChild(messageElement);
-  });
+      socket.send(JSON.stringify({
+        type: 'message',
+        username,
+        room,
+        text
+      }));
 
-  button.addEventListener('click', () => {
-    const text = input.value;
-
-    socket.send(JSON.stringify({
-      type: 'message',
-      username,
-      text
-    }));
-
-    input.value = '';
-  });
-</script>
+      input.value = '';
+    });
+  </script>
 
 </body>
 </html>
+
+<div class="sidebar">
+    <h3>Online users</h3>
+    <p id="onlineCount">0</p>
+
+    <ul id="usersList"></ul>
+
+    <h3>Stats</h3>
+    <pre id="statsBox"></pre>
+</div>
