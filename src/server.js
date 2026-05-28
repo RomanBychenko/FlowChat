@@ -39,7 +39,16 @@ import {
 import {
   getMessageCache
 } from './cache/messageCache.js';
+import {
+    loggerDecorator
+} from './logger/loggerDecorator.js';
 
+
+const loggedModerateMessage =
+    loggerDecorator(
+        moderateMessage,
+        'ERROR'
+    );
 
 const PORT = 8080;
 const messageIds = messageIdGenerator();
@@ -100,13 +109,13 @@ wss.on('connection', (socket) => {
         room: data.room
       });
 
-      broadcastMessage(data.room, {
+      loggedBroadcastMessage(data.room, {
         type: 'system',
         text: `${data.username} joined the room`,
         time: getCurrentTime()
       });
 
-      updateRoomData(data.room);
+      loggedUpdateRoomData(data.room);
 
       const cachedMessages =
         getMessageCache();
@@ -139,7 +148,7 @@ wss.on('connection', (socket) => {
       updateUserActivity(socket);
 
       const moderationResult =
-          await moderateMessage(data.text);
+          await loggedModerateMessage(data.text);
 
       if (moderationResult.blocked) {
 
@@ -169,7 +178,7 @@ wss.on('connection', (socket) => {
           room: data.room
       });
 
-      broadcastMessage(data.room, {
+      loggedBroadcastMessage(data.room, {
         id: messageIds.next().value,
         type: 'message',
         username: data.username,
@@ -195,13 +204,13 @@ wss.on('connection', (socket) => {
 
     clearRoomStatsCache();
 
-    broadcastMessage(user.room, {
+    loggedBroadcastMessage(user.room, {
       type: 'system',
       text: `${user.username} left the room`,
       time: getCurrentTime()
     });
 
-    updateRoomData(user.room);
+    loggedUpdateRoomData(user.room);
 
     chatEventBus.emit(
       'user:left',
@@ -210,36 +219,59 @@ wss.on('connection', (socket) => {
   });  
 });
 
-function broadcastMessage(roomName, message) {
-  const users = getRoomUsers(roomName);
+function broadcastMessage(
+    roomName,
+    message
+) {
 
-  for (const user of users) {
-    user.socket.send(
-      JSON.stringify(message)
-    );
-  }
+    const users =
+        getRoomUsers(roomName);
+
+    for (const user of users) {
+
+        user.socket.send(
+            JSON.stringify(message)
+        );
+    }
 }
+
+const loggedBroadcastMessage =
+    loggerDecorator(
+        broadcastMessage,
+        'INFO'
+    );
 
 function updateRoomData(roomName) {
-  const cachedStats =
-    getRoomStatsCache('room-stats');
-  const users = getRoomUsers(roomName);
 
-  const usernames = users.map((user) => {
-    return user.username;
-  });
+    const cachedStats =
+        getRoomStatsCache('room-stats');
 
-  broadcastMessage(roomName, {
-    type: 'roomData',
-    users: usernames,
-    online: users.length,
-    stats: cachedStats || getRoomStats()
-  });
+    const users =
+        getRoomUsers(roomName);
 
-  if (!cachedStats) {
-    setRoomStatsCache(
-      'room-stats',
-      getRoomStats()
-    );
-  }
+    const usernames =
+        users.map((user) => {
+            return user.username;
+        });
+
+    loggedBroadcastMessage(roomName, {
+        type: 'roomData',
+        users: usernames,
+        online: users.length,
+        stats: cachedStats || getRoomStats()
+    });
+
+    if (!cachedStats) {
+
+        setRoomStatsCache(
+            'room-stats',
+            getRoomStats()
+        );
+    }
 }
+
+const loggedUpdateRoomData =
+    loggerDecorator(
+        updateRoomData,
+        'DEBUG'
+    );
