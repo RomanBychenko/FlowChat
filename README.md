@@ -367,6 +367,75 @@ Possible future improvements:
 
 ---
 
+
+## Latest Improvements
+
+### Lab 6 — Streams & Async Iterator
+
+Implemented memory-efficient log streaming using:
+
+- `async function*`
+- `for await...of`
+- Node.js `Readable` streams
+
+Added:
+
+- `streamLogs()` async iterator
+- `/api/logs` endpoint
+- streaming log reading from `./logs/chat.log`
+
+This allows processing large log files without loading the entire file into memory.
+
+---
+
+### Lab 8 — Authentication
+
+Added API authentication middleware for protected REST endpoints.
+
+Implemented:
+
+- API key authentication
+- `authMiddleware`
+- protected routes:
+  - `/api/stats`
+  - `/api/messages`
+  - `/api/logs`
+
+Example request:
+
+```http
+x-api-key: secret123
+```
+
+---
+
+### Lab 9 — Logger Decorator
+
+Replaced simple logging function with configurable logger decorator.
+
+Implemented:
+
+- function decorators
+- log levels:
+  - INFO
+  - DEBUG
+  - ERROR
+- support for:
+  - synchronous functions
+  - asynchronous functions
+
+Decorated functions:
+
+- `broadcastMessage()`
+- `updateRoomData()`
+- `moderateMessage()`
+
+Logs are written into:
+
+```bash
+./logs/chat.log
+```
+
 # Author
 
 Roman Bychenko
