@@ -44,6 +44,7 @@ import {
 } from './logger/loggerDecorator.js';
 
 
+// обгортаємо асинхронну модерацію декоратором логування
 const loggedModerateMessage =
     loggerDecorator(
         moderateMessage,
@@ -51,6 +52,7 @@ const loggedModerateMessage =
     );
 
 const PORT = 8080;
+// генератор унікальних ID повідомлень
 const messageIds = messageIdGenerator();
 
 // створення realtime серверу
@@ -63,6 +65,7 @@ const wss = new WebSocketServer({
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+// запуск сервісу очищення неактивних користувачів
 startCleanupService();
 
 // спрацьовує коли користувач підключається
@@ -78,6 +81,7 @@ wss.on('connection', (socket) => {
     const data = JSON.parse(rawMessage);
 
     if (data.type === 'join') {
+      // перевірка коректності імені користувача
       if (!validateUsername(data.username)) {
 
         socket.send(JSON.stringify({
@@ -88,6 +92,7 @@ wss.on('connection', (socket) => {
 
         return;
       }
+      // додаємо користувача до системи та кімнати
       addUser(
       data.username,
       socket,
@@ -99,27 +104,33 @@ wss.on('connection', (socket) => {
       socket
     });
 
+    // очищаємо кеш статистики після змін у кімнатах
     clearRoomStatsCache();
 
+      // генеруємо подію входу користувача
       chatEventBus.emit('user:join', data.username);
 
+      // зберігаємо повідомлення в кеш
       addMessageToCache({
         username: data.username,
         text: data.text,
         room: data.room
       });
 
+      // надсилаємо системне повідомлення всім у кімнаті
       loggedBroadcastMessage(data.room, {
         type: 'system',
         text: `${data.username} joined the room`,
         time: getCurrentTime()
       });
 
+      // оновлюємо список користувачів та статистику кімнати
       loggedUpdateRoomData(data.room);
 
       const cachedMessages =
         getMessageCache();
 
+      // відправляємо новому користувачу кеш останніх повідомлень
       for (const message of cachedMessages) {
         if (message.room === data.room) {
           socket.send(JSON.stringify({
@@ -134,6 +145,7 @@ wss.on('connection', (socket) => {
     }
 
     if (data.type === 'message') {
+      // перевірка коректності повідомлення
       if (!validateMessage(data.text)) {
 
         socket.send(JSON.stringify({
@@ -145,11 +157,14 @@ wss.on('connection', (socket) => {
         return;
       }
 
+      // оновлюємо час останньої активності користувача
       updateUserActivity(socket);
 
+      // модерація повідомлення через async функцію
       const moderationResult =
           await loggedModerateMessage(data.text);
 
+      // повідомлення заблоковане модерацією
       if (moderationResult.blocked) {
 
           chatEventBus.emit(
@@ -167,6 +182,7 @@ wss.on('connection', (socket) => {
           return;
       }
 
+      // генеруємо подію нового повідомлення
       chatEventBus.emit('message:new', {
           username: data.username,
           text: data.text
@@ -178,6 +194,7 @@ wss.on('connection', (socket) => {
           room: data.room
       });
 
+      // розсилаємо повідомлення всім користувачам кімнати
       loggedBroadcastMessage(data.room, {
         id: messageIds.next().value,
         type: 'message',
@@ -188,6 +205,7 @@ wss.on('connection', (socket) => {
     }
 });
 
+  // користувач відключився
   socket.on('close', () => {
     const user = findUserBySocket(socket);
 
@@ -195,6 +213,7 @@ wss.on('connection', (socket) => {
       return;
     }
 
+    // видаляємо користувача з кімнати та системи
     removeUserFromRoom(
       user.room,
       socket
@@ -219,6 +238,7 @@ wss.on('connection', (socket) => {
   });  
 });
 
+// функція розсилки повідомлень усім користувачам кімнати
 function broadcastMessage(
     roomName,
     message
@@ -235,12 +255,14 @@ function broadcastMessage(
     }
 }
 
+// декоратор логування для відправки повідомлень
 const loggedBroadcastMessage =
     loggerDecorator(
         broadcastMessage,
         'INFO'
     );
 
+// оновлення списку користувачів та статистики кімнати
 function updateRoomData(roomName) {
 
     const cachedStats =
@@ -263,6 +285,7 @@ function updateRoomData(roomName) {
 
     if (!cachedStats) {
 
+        // кешуємо статистику кімнат для зменшення навантаження
         setRoomStatsCache(
             'room-stats',
             getRoomStats()
@@ -270,6 +293,7 @@ function updateRoomData(roomName) {
     }
 }
 
+// декоратор логування для оновлення статистики
 const loggedUpdateRoomData =
     loggerDecorator(
         updateRoomData,

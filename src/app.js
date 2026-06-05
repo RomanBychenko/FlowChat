@@ -9,8 +9,10 @@ import {
 
 const app = express();
 
+// роздача статичних файлів із папки public
 app.use(express.static('public'));
 
+// API для отримання статистики сервера
 app.get(
     '/api/stats',
     authMiddleware,
@@ -24,6 +26,7 @@ app.get(
     }
 );
 
+// API для отримання кешу повідомлень
 app.get(
     '/api/messages',
     authMiddleware,
@@ -36,6 +39,7 @@ app.get(
     }
 );
 
+// API для перегляду останніх логів сервера
 app.get(
     '/api/logs',
     authMiddleware,
@@ -43,12 +47,14 @@ app.get(
 
         const logs = [];
 
+        // читаємо лог-файл через async iterator та stream
         for await (
             const line of streamLogs('./logs/chat.log')
         ) {
 
             logs.push(line);
 
+            // повертаємо максимум 50 рядків
             if (logs.length >= 50) {
                 break;
             }

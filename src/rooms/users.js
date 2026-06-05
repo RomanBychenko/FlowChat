@@ -1,6 +1,9 @@
+// масив для зберігання всіх підключених користувачів
 const users = [];
 
+// додає нового користувача в систему
 export function addUser(username, socket, room = 'general') {
+
     const user = {
         username,
         socket,
@@ -14,7 +17,9 @@ export function addUser(username, socket, room = 'general') {
     return user;
 }
 
+// видаляє користувача по його socket-з'єднанню
 export function removeUser(socket) {
+
     const index = users.findIndex(
         (user) => user.socket === socket
     );
@@ -26,21 +31,27 @@ export function removeUser(socket) {
     return null;
 }
 
+// повертає список усіх користувачів
 export function getUsers() {
     return users;
 }
 
+// повертає кількість користувачів онлайн
 export function getUsersCount() {
     return users.length;
 }
 
+// знаходить користувача по socket
 export function findUserBySocket(socket) {
+
     return users.find(
         (user) => user.socket === socket
     );
 }
 
+// оновлює час останньої активності користувача
 export function updateUserActivity(socket) {
+
     const user = findUserBySocket(socket);
 
     if (user) {
@@ -48,7 +59,9 @@ export function updateUserActivity(socket) {
     }
 }
 
+// повертає список неактивних користувачів
 export function getInactiveUsers(timeout = 300000) {
+
     const now = Date.now();
 
     return users.filter(
@@ -56,10 +69,14 @@ export function getInactiveUsers(timeout = 300000) {
     );
 }
 
+// видаляє користувачів, які довго не проявляли активність
 export function removeInactiveUsers(timeout = 300000) {
-    const inactiveUsers = getInactiveUsers(timeout);
+
+    const inactiveUsers =
+        getInactiveUsers(timeout);
 
     for (const inactiveUser of inactiveUsers) {
+
         const index = users.findIndex(
             (user) => user.socket === inactiveUser.socket
         );

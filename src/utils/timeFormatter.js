@@ -1,3 +1,4 @@
+// повертає поточний час у форматі HH:MM
 export function getCurrentTime() {
 
     const now = new Date();

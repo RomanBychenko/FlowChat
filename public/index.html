@@ -49,23 +49,28 @@ button {
     Send
   </button>
 
+  <!-- головна область для відображення повідомлень -->
   <div id="messages"></div>
 
   <hr>
 
+  <!-- список користувачів онлайн -->
   <h3>Online users</h3>
   <div id="onlineUsers"></div>
 
+  <!-- статистика кімнат -->
   <h3>Room stats</h3>
   <div id="roomStats"></div>
 
   <script>
+    // створення WebSocket-з'єднання із сервером
     const socket = new WebSocket('ws://localhost:8080');
 
     const onlineCount = document.getElementById('onlineCount');
     const usersList = document.getElementById('usersList');
     const statsBox = document.getElementById('statsBox'); 
 
+    // повідомлення про втрату з'єднання
     socket.addEventListener('close', () => {
 
       addMessage({
@@ -74,6 +79,7 @@ button {
         time: 'SYSTEM'
       });
     });
+    // повідомлення про успішне підключення
     socket.addEventListener('open', () => {
 
       addMessage({
@@ -105,6 +111,7 @@ button {
       }));
     });
 
+    // обробка всіх повідомлень від сервера
     socket.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
 
@@ -125,6 +132,7 @@ button {
       Blocked: ${data.stats.blocked}`;
       }
 
+      // оновлення списку користувачів та статистики кімнат
       if (data.type === 'roomData') {
         onlineUsers.innerHTML = '';
         roomStats.innerHTML = '';
@@ -162,6 +170,7 @@ button {
       addMessage(data);
     });
 
+    // відображення повідомлення в чаті
     function addMessage(message) {
       const messageElement =
         document.createElement('p');
@@ -179,9 +188,11 @@ button {
       messages.appendChild(messageElement);
     }
 
+    // відправка повідомлення на сервер
     button.addEventListener('click', () => {
       const text = input.value;
 
+      // після підключення повідомляємо сервер про вхід у кімнату
       socket.send(JSON.stringify({
         type: 'message',
         username,

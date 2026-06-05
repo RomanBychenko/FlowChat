@@ -1,6 +1,7 @@
 import chatEventBus from './chatEventBus.js';
 import { writeLog } from '../logger/logger.js';
 
+// обробка події входу користувача в чат
 chatEventBus.on('user:join', (username) => {
     const message = `[EVENT] ${username} joined`;
 
@@ -9,6 +10,7 @@ chatEventBus.on('user:join', (username) => {
     writeLog(message);
 });
 
+// обробка події нового повідомлення
 chatEventBus.on('message:new', (message) => {
     const logMessage =
     `[EVENT] new message from ${message.username}`;
@@ -18,6 +20,7 @@ chatEventBus.on('message:new', (message) => {
     writeLog(logMessage);
 });
 
+// обробка події виходу користувача з чату
 chatEventBus.on('user:left', (username) => {
     const message = `[EVENT] ${username} left`;
 
@@ -26,6 +29,7 @@ chatEventBus.on('user:left', (username) => {
     writeLog(message);
 });
 
+// обробка події блокування повідомлення модератором
 chatEventBus.on(
   'message:blocked',
   (data) => {
@@ -38,4 +42,5 @@ chatEventBus.on(
   }
 );
 
-// on() - підписується на подію;  emit() - буде викликати listener'и
+// on() - підписка на подію
+// emit() - виклик усіх обробників цієї події
